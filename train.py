@@ -103,7 +103,7 @@ def train(rank, args, shared_model, counter, counter_lock, loss, loss_lock, opti
         c_loss = policy_loss + args.value_loss_coef * value_loss
         if c_loss <= loss.value:
             with loss_lock:
-                loss_lock.value = c_loss
+                loss.value = c_loss
 
             optimizer.zero_grad()
 
