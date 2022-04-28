@@ -41,6 +41,7 @@ parser.add_argument('--env-name', default='PongDeterministic-v4',
 parser.add_argument('--no-shared', default=False,
                     help='use an optimizer without shared momentum.')
 
+parser.add_argument('--log-name', help = 'log file name')
 
 if __name__ == '__main__':
     os.environ['OMP_NUM_THREADS'] = '1'
@@ -65,7 +66,7 @@ if __name__ == '__main__':
     counter = mp.Value('i', 0)
     lock = mp.Lock()
 
-    p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter))
+    p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter, args.log_name))
     p.start()
     processes.append(p)
 

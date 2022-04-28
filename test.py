@@ -8,7 +8,7 @@ from envs import create_atari_env
 from model import ActorCritic
 
 
-def test(rank, args, shared_model, counter):
+def test(rank, args, shared_model, counter, log_file):
     torch.manual_seed(args.seed + rank)
 
     env = create_atari_env(args.env_name)
@@ -59,6 +59,13 @@ def test(rank, args, shared_model, counter):
                               time.gmtime(time.time() - start_time)),
                 counter.value, counter.value / (time.time() - start_time),
                 reward_sum, episode_length))
+            f = open(log_file, 'a')
+            f.write("Time {}, num steps {}, FPS {:.0f}, episode reward {}, episode length {}".format(
+                time.strftime("%Hh %Mm %Ss",
+                              time.gmtime(time.time() - start_time)),
+                counter.value, counter.value / (time.time() - start_time),
+                reward_sum, episode_length))
+            f.close()
             reward_sum = 0
             episode_length = 0
             actions.clear()
