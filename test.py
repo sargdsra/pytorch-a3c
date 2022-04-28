@@ -61,7 +61,7 @@ def test(rank, args, shared_model, counter, log_file):
                 reward_sum, episode_length))
             f = open(log_file, 'a')
             f.write("Time {}, num steps {}, FPS {:.0f}, episode reward {}, episode length {}".format(
-                time.strftime("%Hh %Mm %Ss",
+                time.strftime("%Hh %Mm %Ss\n",
                               time.gmtime(time.time() - start_time)),
                 counter.value, counter.value / (time.time() - start_time),
                 reward_sum, episode_length))
