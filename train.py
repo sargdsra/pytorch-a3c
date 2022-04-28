@@ -14,7 +14,7 @@ def ensure_shared_grads(model, shared_model):
         shared_param._grad = param.grad
 
 
-def train(rank, args, shared_model, counter, lock, optimizer=None):
+def train(rank, args, shared_model, counter, counter_lock, loss, loss_lock, optimizer=None):
     torch.manual_seed(args.seed + rank)
 
     env = create_atari_env(args.env_name)
@@ -63,7 +63,7 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
             done = done or episode_length >= args.max_episode_length
             reward = max(min(reward, 1), -1)
 
-            with lock:
+            with counter_lock:
                 counter.value += 1
 
             if done:
@@ -99,11 +99,16 @@ def train(rank, args, shared_model, counter, lock, optimizer=None):
 
             policy_loss = policy_loss - \
                 log_probs[i] * gae.detach() - args.entropy_coef * entropies[i]
+        
+        c_loss = policy_loss + args.value_loss_coef * value_loss
+        if c_loss <= loss.value:
+            with loss_lock:
+                loss_lock.value = c_loss
 
-        optimizer.zero_grad()
+            optimizer.zero_grad()
 
-        (policy_loss + args.value_loss_coef * value_loss).backward()
-        torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+            (policy_loss + args.value_loss_coef * value_loss).backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
-        ensure_shared_grads(model, shared_model)
-        optimizer.step()
+            ensure_shared_grads(model, shared_model)
+            optimizer.step()
