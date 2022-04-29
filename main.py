@@ -49,8 +49,8 @@ parser.add_argument('--log-name', help = 'log file name')
 parser.add_argument('--w-update', default = False,
                     help='windowing update')
 
-parser.add_argument('--w-factor', type=float, default=0.999,
-                    help='discount factor for windowing update (default: 0.999)')
+parser.add_argument('--w-factor', type=float, default=0.99,
+                    help='discount factor for windowing update (default: 0.99)')
 
 if __name__ == '__main__':
     os.environ['OMP_NUM_THREADS'] = '1'
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     processes.append(p)
 
     for rank in range(0, args.num_processes):
-        p = mp.Process(target=train, args=(rank, args, shared_model, counter, lock, optimizer, args.no_soft))
+        p = mp.Process(target=train, args=(rank, args, shared_model, counter, lock, optimizer))
         p.start()
         processes.append(p)
     for p in processes:

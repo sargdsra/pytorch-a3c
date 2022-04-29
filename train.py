@@ -22,7 +22,7 @@ def window_updating(model, shared_model, factor):
             shared_param.copy_(new_val)
 
 
-def train(rank, args, shared_model, counter, lock, optimizer = None, no_soft = False):
+def train(rank, args, shared_model, counter, lock, optimizer = None):
     torch.manual_seed(args.seed + rank)
 
     env = create_atari_env(args.env_name)
@@ -64,7 +64,7 @@ def train(rank, args, shared_model, counter, lock, optimizer = None, no_soft = F
                                             (hx, cx)))
             prob = F.softmax(logit, dim=-1)
             log_prob = F.log_softmax(logit, dim=-1)
-            if no_soft:
+            if args.no_soft:
                 entropy = 0
             else:
                 entropy = -(log_prob * prob).sum(1, keepdim=True)
@@ -126,7 +126,7 @@ def train(rank, args, shared_model, counter, lock, optimizer = None, no_soft = F
             window_updating(model, shared_model, args.w_factor)
 
 
-def train_go_better_loss(rank, args, shared_model, counter, counter_lock, loss, loss_lock, optimizer = None, no_soft = False):
+def train_go_better_loss(rank, args, shared_model, counter, counter_lock, loss, loss_lock, optimizer = None):
     torch.manual_seed(args.seed + rank)
 
     env = create_atari_env(args.env_name)
@@ -135,7 +135,10 @@ def train_go_better_loss(rank, args, shared_model, counter, counter_lock, loss, 
     model = ActorCritic(env.observation_space.shape[0], env.action_space)
 
     if optimizer is None:
-        optimizer = optim.Adam(shared_model.parameters(), lr=args.lr)
+        if args.w_update:
+            optimizer = optim.Adam(model.parameters(), lr=args.lr)
+        if args.no_shared:
+            optimizer = optim.Adam(shared_model.parameters(), lr=args.lr)
 
     model.train()
 
@@ -165,7 +168,7 @@ def train_go_better_loss(rank, args, shared_model, counter, counter_lock, loss, 
                                             (hx, cx)))
             prob = F.softmax(logit, dim=-1)
             log_prob = F.log_softmax(logit, dim=-1)
-            if no_soft:
+            if args.no_soft:
                 entropy = 0
             else:
                 entropy = -(log_prob * prob).sum(1, keepdim=True)
@@ -225,5 +228,8 @@ def train_go_better_loss(rank, args, shared_model, counter, counter_lock, loss, 
             (policy_loss + args.value_loss_coef * value_loss).backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
-            ensure_shared_grads(model, shared_model)
+            if not args.w_update:
+                ensure_shared_grads(model, shared_model)
             optimizer.step()
+            if args.w_update:
+                window_updating(model, shared_model, args.w_factor)

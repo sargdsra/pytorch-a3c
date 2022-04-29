@@ -46,6 +46,12 @@ parser.add_argument('--no-soft', default = False,
 
 parser.add_argument('--log-name', help = 'log file name')
 
+parser.add_argument('--w-update', default = False,
+                    help='windowing update')
+
+parser.add_argument('--w-factor', type=float, default=0.99,
+                    help='discount factor for windowing update (default: 0.99)')
+
 if __name__ == '__main__':
     os.environ['OMP_NUM_THREADS'] = '1'
     os.environ['CUDA_VISIBLE_DEVICES'] = ""
@@ -58,7 +64,7 @@ if __name__ == '__main__':
         env.observation_space.shape[0], env.action_space)
     shared_model.share_memory()
 
-    if args.no_shared:
+    if args.no_shared or args.w_update:
         optimizer = None
     else:
         optimizer = my_optim.SharedAdam(shared_model.parameters(), lr=args.lr)
@@ -77,7 +83,7 @@ if __name__ == '__main__':
     processes.append(p)
 
     for rank in range(0, args.num_processes):
-        p = mp.Process(target = train_go_better_loss, args=(rank, args, shared_model, counter, counter_lock, loss, loss_lock, optimizer, args.no_soft))
+        p = mp.Process(target = train_go_better_loss, args=(rank, args, shared_model, counter, counter_lock, loss, loss_lock, optimizer))
         p.start()
         processes.append(p)
     for p in processes:
