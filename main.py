@@ -49,7 +49,7 @@ parser.add_argument('--log-name', help = 'log file name')
 parser.add_argument('--w-update', default = False,
                     help='windowing update')
 
-parser.add_argument('--w_factor', type=float, default=0.999,
+parser.add_argument('--w-factor', type=float, default=0.999,
                     help='discount factor for windowing update (default: 0.999)')
 
 if __name__ == '__main__':
