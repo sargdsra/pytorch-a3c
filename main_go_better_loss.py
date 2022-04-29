@@ -9,8 +9,8 @@ import torch.multiprocessing as mp
 import my_optim
 from envs import create_atari_env
 from model import ActorCritic
-from test import test
-from train import train
+from test import test_go_better_loss
+from train import train_go_better_loss
 
 # Based on
 # https://github.com/pytorch/examples/tree/master/mnist_hogwild
@@ -44,6 +44,8 @@ parser.add_argument('--no-shared', default=False,
 parser.add_argument('--no-soft', default = False,
                     help='use soft actor loss.')
 
+parser.add_argument('--log-name', help = 'log file name')
+
 if __name__ == '__main__':
     os.environ['OMP_NUM_THREADS'] = '1'
     os.environ['CUDA_VISIBLE_DEVICES'] = ""
@@ -65,14 +67,17 @@ if __name__ == '__main__':
     processes = []
 
     counter = mp.Value('i', 0)
-    lock = mp.Lock()
+    counter_lock = mp.Lock()
 
-    p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter, args.log_name))
+    loss = mp.Value('f', float("Inf"))
+    loss_lock = mp.Lock()
+
+    p = mp.Process(target = test_go_better_loss, args=(args.num_processes, args, shared_model, counter, loss, args.log_name))
     p.start()
     processes.append(p)
 
     for rank in range(0, args.num_processes):
-        p = mp.Process(target=train, args=(rank, args, shared_model, counter, lock, optimizer, args.no_soft))
+        p = mp.Process(target = train_go_better_loss, args=(rank, args, shared_model, counter, counter_lock, loss, loss_lock, optimizer, args.no_soft))
         p.start()
         processes.append(p)
     for p in processes:
