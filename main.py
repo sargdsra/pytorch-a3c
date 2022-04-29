@@ -46,6 +46,12 @@ parser.add_argument('--no-soft', default = False,
 
 parser.add_argument('--log-name', help = 'log file name')
 
+parser.add_argument('--w-update', default = False,
+                    help='windowing update')
+
+parser.add_argument('--w_factor', type=float, default=0.999,
+                    help='discount factor for windowing update (default: 0.999)')
+
 if __name__ == '__main__':
     os.environ['OMP_NUM_THREADS'] = '1'
     os.environ['CUDA_VISIBLE_DEVICES'] = ""
@@ -58,7 +64,7 @@ if __name__ == '__main__':
         env.observation_space.shape[0], env.action_space)
     shared_model.share_memory()
 
-    if args.no_shared:
+    if args.no_shared or args.w_update:
         optimizer = None
     else:
         optimizer = my_optim.SharedAdam(shared_model.parameters(), lr=args.lr)

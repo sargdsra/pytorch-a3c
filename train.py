@@ -14,6 +14,14 @@ def ensure_shared_grads(model, shared_model):
         shared_param._grad = param.grad
 
 
+def window_updating(model, shared_model, factor):
+    with torch.no_grad():
+        for param, shared_param in zip(model.parameters(),
+                                    shared_model.parameters()):
+            new_val = factor * shared_param + (1 - factor) * param
+            shared_param.copy_(new_val)
+
+
 def train(rank, args, shared_model, counter, lock, optimizer = None, no_soft = False):
     torch.manual_seed(args.seed + rank)
 
@@ -23,7 +31,10 @@ def train(rank, args, shared_model, counter, lock, optimizer = None, no_soft = F
     model = ActorCritic(env.observation_space.shape[0], env.action_space)
 
     if optimizer is None:
-        optimizer = optim.Adam(shared_model.parameters(), lr=args.lr)
+        if args.w_update:
+            optimizer = optim.Adam(model.parameters(), lr=args.lr)
+        if args.no_shared:
+            optimizer = optim.Adam(shared_model.parameters(), lr=args.lr)
 
     model.train()
 
@@ -108,8 +119,11 @@ def train(rank, args, shared_model, counter, lock, optimizer = None, no_soft = F
         (policy_loss + args.value_loss_coef * value_loss).backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
-        ensure_shared_grads(model, shared_model)
+        if not args.w_update:
+            ensure_shared_grads(model, shared_model)
         optimizer.step()
+        if args.w_update:
+            window_updating(model, shared_model, args.w_factor)
 
 
 def train_go_better_loss(rank, args, shared_model, counter, counter_lock, loss, loss_lock, optimizer = None, no_soft = False):
