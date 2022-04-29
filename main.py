@@ -44,6 +44,8 @@ parser.add_argument('--no-shared', default=False,
 parser.add_argument('--no-soft', default = False,
                     help='use soft actor loss.')
 
+parser.add_argument('--log-name', help = 'log file name')
+
 if __name__ == '__main__':
     os.environ['OMP_NUM_THREADS'] = '1'
     os.environ['CUDA_VISIBLE_DEVICES'] = ""
