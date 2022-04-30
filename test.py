@@ -8,7 +8,7 @@ from envs import create_atari_env
 from model import ActorCritic
 
 
-def test(rank, args, shared_model, counter, log_file):
+def test(rank, args, shared_model, counter):
     torch.manual_seed(args.seed + rank)
 
     env = create_atari_env(args.env_name)
@@ -59,7 +59,7 @@ def test(rank, args, shared_model, counter, log_file):
                               time.gmtime(time.time() - start_time)),
                 counter.value, counter.value / (time.time() - start_time),
                 reward_sum, episode_length))
-            f = open(log_file, 'a')
+            f = open(args.log_name, 'a')
             f.write("Time {}, num steps {}, FPS {:.0f}, episode reward {}, episode length {}\n".format(
                 time.strftime("%Hh %Mm %Ss",
                               time.gmtime(time.time() - start_time)),
@@ -75,7 +75,7 @@ def test(rank, args, shared_model, counter, log_file):
         state = torch.from_numpy(state)
 
 
-def test_go_better_loss(rank, args, shared_model, counter, loss, log_file):
+def test_go_better_loss(rank, args, shared_model, counter, loss, loss_lock):
     torch.manual_seed(args.seed + rank)
 
     env = create_atari_env(args.env_name)
@@ -126,7 +126,7 @@ def test_go_better_loss(rank, args, shared_model, counter, loss, log_file):
                               time.gmtime(time.time() - start_time)),
                 counter.value, counter.value / (time.time() - start_time),
                 reward_sum, episode_length, loss.value))
-            f = open(log_file, 'a')
+            f = open(args.log_name, 'a')
             f.write("Time {}, num steps {}, FPS {:.0f}, episode reward {}, episode length {}, loss {:.0f}\n".format(
                 time.strftime("%Hh %Mm %Ss",
                               time.gmtime(time.time() - start_time)),
@@ -137,6 +137,9 @@ def test_go_better_loss(rank, args, shared_model, counter, loss, log_file):
             episode_length = 0
             actions.clear()
             state = env.reset()
+            if args.one_step:
+                with loss_lock:
+                    loss.value = float("Inf")
             time.sleep(60)
 
         state = torch.from_numpy(state)

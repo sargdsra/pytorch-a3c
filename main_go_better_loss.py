@@ -52,6 +52,9 @@ parser.add_argument('--w-update', default = False,
 parser.add_argument('--w-factor', type=float, default=0.99,
                     help='discount factor for windowing update (default: 0.99)')
 
+parser.add_argument('--one-step', default = False,
+                    help = 'go one step better loss.')
+
 if __name__ == '__main__':
     os.environ['OMP_NUM_THREADS'] = '1'
     os.environ['CUDA_VISIBLE_DEVICES'] = ""
@@ -78,7 +81,7 @@ if __name__ == '__main__':
     loss = mp.Value('f', float("Inf"))
     loss_lock = mp.Lock()
 
-    p = mp.Process(target = test_go_better_loss, args=(args.num_processes, args, shared_model, counter, loss, args.log_name))
+    p = mp.Process(target = test_go_better_loss, args=(args.num_processes, args, shared_model, counter, loss, loss_lock))
     p.start()
     processes.append(p)
 
