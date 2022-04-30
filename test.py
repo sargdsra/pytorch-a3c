@@ -121,13 +121,13 @@ def test_go_better_loss(rank, args, shared_model, counter, loss, loss_lock):
             done = True
 
         if done:
-            print("Time {}, num steps {}, FPS {:.0f}, episode reward {}, episode length {}, loss {:.0f}".format(
+            print("Time {}, num steps {}, FPS {:.0f}, episode reward {}, episode length {}, loss {:.4f}".format(
                 time.strftime("%Hh %Mm %Ss",
                               time.gmtime(time.time() - start_time)),
                 counter.value, counter.value / (time.time() - start_time),
                 reward_sum, episode_length, loss.value))
             f = open(args.log_name, 'a')
-            f.write("Time {}, num steps {}, FPS {:.0f}, episode reward {}, episode length {}, loss {:.0f}\n".format(
+            f.write("Time {}, num steps {}, FPS {:.0f}, episode reward {}, episode length {}, loss {:.4f}\n".format(
                 time.strftime("%Hh %Mm %Ss",
                               time.gmtime(time.time() - start_time)),
                 counter.value, counter.value / (time.time() - start_time),
