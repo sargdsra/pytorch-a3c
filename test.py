@@ -139,7 +139,7 @@ def test_go_better_loss(rank, args, shared_model, counter, loss, loss_lock):
             state = env.reset()
             if args.one_step:
                 with loss_lock:
-                    loss.value = float("Inf")
+                    loss.value = -float("Inf")
             time.sleep(60)
 
         state = torch.from_numpy(state)

@@ -78,7 +78,7 @@ if __name__ == '__main__':
     counter = mp.Value('i', 0)
     counter_lock = mp.Lock()
 
-    loss = mp.Value('f', float("Inf"))
+    loss = mp.Value('f', -float("Inf"))
     loss_lock = mp.Lock()
 
     p = mp.Process(target = test_go_better_loss, args=(args.num_processes, args, shared_model, counter, loss, loss_lock))

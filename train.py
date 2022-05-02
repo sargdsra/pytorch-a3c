@@ -219,7 +219,7 @@ def train_go_better_loss(rank, args, shared_model, counter, counter_lock, loss, 
                 log_probs[i] * gae.detach() - args.entropy_coef * entropies[i]
         
         c_loss = policy_loss + args.value_loss_coef * value_loss
-        if c_loss <= loss.value:
+        if c_loss >= loss.value:
             with loss_lock:
                 loss.value = c_loss
 
